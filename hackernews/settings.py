@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Our custom user model
+AUTH_USER_MODEL = 'users.User'
 
 # Application definition
 
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
 
     'graphene_django',
     'links',
+    'users',
 ]
 
 MIDDLEWARE = [
