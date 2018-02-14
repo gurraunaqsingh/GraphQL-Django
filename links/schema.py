@@ -4,15 +4,45 @@ from graphene_django import DjangoObjectType
 from links.models import Link, Vote
 from users.schema import get_user, UserType
 
+from django.db.models import Q
+
 class LinkType(DjangoObjectType):
     class Meta:
         model = Link
 
+class VoteType(DjangoObjectType):
+    class Meta:
+        model = Vote
+
 class Query(graphene.ObjectType):
     links = graphene.List(LinkType)
+    votes = graphene.List(VoteType)
 
     def resolve_links(self, info, **kwargs):
         return Link.objects.all()
+
+    def resolve_votes(self, info, **kwargs):
+        return Vote.objects.all()
+
+class Query(graphene.ObjectType):
+    # Add the search parameter inside our links field
+    links = graphene.List(LinkType, search=graphene.String())
+    votes = graphene.List(VoteType)
+
+    # Change the resolver
+    def resolve_links(self, info, search=None, **kwargs):
+        # The value sent with the search parameter will be on the args variable
+        if search:
+            filter = (
+                Q(url__icontains=search) | 
+                Q(description__icontains=search)
+            )
+            return Link.objects.filter(filter)
+
+        return Link.objects.all()
+
+    def resolve_votes(self, info, **kwargs):
+        return Vote.objects.all()
 
 class CreateLink(graphene.Mutation):
     id = graphene.Int()
@@ -64,19 +94,7 @@ class CreateVote(graphene.Mutation):
 
         return CreateVote(user=user, link=link)
 
-class VoteType(DjangoObjectType):
-    class Meta:
-        model = Vote
 
-class Query(graphene.ObjectType):
-    links = graphene.List(LinkType)
-    votes = graphene.List(VoteType)
-
-    def resolve_links(self, info, **kwargs):
-        return Link.objects.all()
-
-    def resolve_votes(self, info, **kwargs):
-        return Vote.objects.all()
 
 
 class Mutation(graphene.ObjectType):
